@@ -1,0 +1,26 @@
+FROM debian:trixie-slim
+
+RUN --mount=type=tmpfs,target=/var/lib/apt/lists \
+    apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get --no-install-recommends --no-install-suggests -y install \
+      curl \
+      iputils-ping \
+      jq \
+      sudo \
+ && apt-get clean \
+ && useradd --create-home nr5103e \
+ && printf 'nr5103e ALL = NOPASSWD:SETENV: /usr/bin/nr5103e-reconnect\n' >/etc/sudoers.d/nr5103e \
+ && mkfifo --mode=0600 /home/nr5103e/nr5103e.fifo \
+ && chown nr5103e:nr5103e /home/nr5103e/nr5103e.fifo \
+ && touch /tmp/nr5103e-cookies \
+ && chmod a=,g=,u=rw /tmp/nr5103e-cookies
+
+COPY --parents usr/bin /
+
+USER nr5103e
+WORKDIR /home/nr5103e
+
+ENV NR5103E_IP='192.168.1.1'
+ENV NR5103E_WAIT_DOWN=15
+
+ENTRYPOINT [ "/usr/bin/nr5103e-entrypoint" ]
