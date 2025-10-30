@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -ex
 PASSWORD_BASE64="$(/usr/bin/base64 </run/secrets/nr5103e-password)"
 SESSIONKEY="$(/usr/bin/curl --insecure         "https://$NR5103E_IP/UserLogin"                                           --cookie-jar /tmp/nr5103e-cookies --data-raw "{'Input_Account':'admin','Input_Passwd':'$PASSWORD_BASE64'}"  --silent | /usr/bin/jq --raw-output '.sessionkey')"
 SESSIONKEY="$(/usr/bin/curl --insecure -X PUT  "https://$NR5103E_IP/cgi-bin/DAL?oid=cellwan_band&sessionkey=$SESSIONKEY" --cookie     /tmp/nr5103e-cookies --data-raw '{"INTF_Preferred_Access_Technology":"NR5G-SA"}'               --silent | /usr/bin/jq --raw-output '.sessionkey')"
