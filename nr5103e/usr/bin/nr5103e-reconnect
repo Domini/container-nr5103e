@@ -1,0 +1,25 @@
+#!/bin/sh -e
+PASSWORD_BASE64="$(/usr/bin/base64 </run/secrets/nr5103e-password)"
+SESSIONKEY="$(/usr/bin/curl --insecure         "https://$NR5103E_IP/UserLogin"                                           --cookie-jar /tmp/nr5103e-cookies --data-raw "{'Input_Account':'admin','Input_Passwd':'$PASSWORD_BASE64'}"  --silent | /usr/bin/jq --raw-output '.sessionkey')"
+SESSIONKEY="$(/usr/bin/curl --insecure -X PUT  "https://$NR5103E_IP/cgi-bin/DAL?oid=cellwan_band&sessionkey=$SESSIONKEY" --cookie     /tmp/nr5103e-cookies --data-raw '{"INTF_Preferred_Access_Technology":"NR5G-SA"}'               --silent | /usr/bin/jq --raw-output '.sessionkey')"
+
+i=1
+while [ "$i" -le "$NR5103E_WAIT_DOWN" ]; do
+    STATUS="$(/usr/bin/curl --insecure         "https://$NR5103E_IP/cgi-bin/DAL?oid=cellwan_status"                      --cookie     /tmp/nr5103e-cookies                                                                           --silent | /usr/bin/jq --raw-output '.Object[0].INTF_Status')"
+  case "$STATUS" in
+    Up)
+      sleep 1
+      ;;
+    Down)
+SESSIONKEY="$(/usr/bin/curl --insecure -X PUT  "https://$NR5103E_IP/cgi-bin/DAL?oid=cellwan_band&sessionkey=$SESSIONKEY" --cookie     /tmp/nr5103e-cookies --data-raw '{"INTF_Preferred_Access_Technology":"Auto"}'                  --silent | /usr/bin/jq --raw-output '.sessionkey')"
+      kill -s INT 1
+      exit 0
+      ;;
+  esac
+  i=$((i + 1))
+done
+
+SESSIONKEY="$(/usr/bin/curl --insecure -X PUT  "https://$NR5103E_IP/cgi-bin/DAL?oid=cellwan_band&sessionkey=$SESSIONKEY" --cookie     /tmp/nr5103e-cookies --data-raw '{"INTF_Preferred_Access_Technology":"Auto"}'                  --silent | /usr/bin/jq --raw-output '.sessionkey')"
+sleep 5
+              /usr/bin/curl --insecure -X POST "https://$NR5103E_IP/cgi-bin/Reboot?sessionkey=$SESSIONKEY"               --cookie     /tmp/nr5103e-cookies                                                                           --silent
+kill -s INT 1
