@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -ex
 IP="$1"
 EXPECTED_MISSES="$2"
 
@@ -6,9 +6,11 @@ MISSES=0
 while IFS= read -r LINE; do
   case "$LINE" in
     *" bytes from "*": icmp_seq="*" ttl="*" time="*)
+      printf "OK %s\n" "$LINE"
       MISSES=0
       ;;
     "no answer yet for icmp_seq="*)
+      printf "KO %s\n" "$LINE"
       MISSES=$((MISSES+1))
       if [ $MISSES -ge "$EXPECTED_MISSES" ]; then
         exec sudo --preserve-env=NR5103E_IP,NR5103E_WAIT_DOWN /usr/bin/nr5103e-reconnect
