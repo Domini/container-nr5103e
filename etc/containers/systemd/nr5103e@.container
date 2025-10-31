@@ -1,0 +1,13 @@
+[Container]
+AddCapability=NET_RAW
+AutoUpdate=registry
+ContainerName=nr5103e-%i
+Image=ghcr.io/domini/nr5103e:latest
+Pull=newer
+ReadOnly=true
+Secret=nr5103e-%i-password,target=nr5103e-password,mode=0400
+StopSignal=SIGINT
+
+[Service]
+Restart=always
+RestartSec=5min
